@@ -1278,7 +1278,7 @@ function formBadgeHtml(m, side, extraHtml = ''){
   const dotsHtml = form.map(dot).join('');
   if (!dotsHtml && !extraHtml) return '';
   const titleAttr = form.length ? ` title="Form — last ${form.length} (most recent on the right)"` : '';
-  const labelHtml = dotsHtml ? `<span class="form-label">Last 3:</span>` : '';
+  const labelHtml = dotsHtml ? `<span class="form-label">L3:</span>` : '';
   const sepHtml = (dotsHtml && extraHtml) ? `<span class="form-sep">-</span>` : '';
   return `<div class="form-badge"${titleAttr}>${labelHtml}${dotsHtml}${sepHtml}${extraHtml}</div>`;
 }
