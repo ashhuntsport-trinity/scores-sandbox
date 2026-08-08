@@ -1,0 +1,68 @@
+name: Fetch Match Day Scores
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: repo-write-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('scripts/package-lock.json') }}
+
+      - name: Install Playwright browser
+        run: |
+          cd scripts
+          npx playwright install chromium
+
+      - name: Scrape match-day scores
+        run: node scripts/scrape-matchday.js
+
+      - name: Commit updated JSON
+        id: commit
+        run: |
+          git config user.name "Trinity Netball Bot"
+          git config user.email "registrations@trinitynetball.com.au"
+
+          git add public/*.json
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit --amend -m "Update match-day scores"
+          git push --force
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload JSON artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: netball-data-matchday
+          path: |
+            public/fixtures.json
